@@ -1,62 +1,59 @@
-function addEmotes(message, emotes) {
-	if(site == "beam") {
-		for(var i = 0; i < emotes.length; i++) { // Replace for each emote in array.
-			message = message.replace(new RegExp("(\\s|^):" + emotes[i][0] + "(?=\\s|$|<)", "g"), "$1<img src='" + emotes[i][1] + "' class='polyemote' title=':" + emotes[i][0] + "'>");
-			message = message.replace(new RegExp("(\\s|^):" + emotes[i][0] + "Spin(?=\\s|$|<)", "g"), "$1<img src='" + emotes[i][1] + "' class='polyemote polyemote-spin' title=':" + emotes[i][0] + "Spin'>");
-			message = message.replace(new RegExp("(\\s|^):" + emotes[i][0] + "Wheel(?=\\s|$|<)", "g"), "$1<img src='" + emotes[i][1] + "' class='polyemote polyemote-spin-fast' title=':" + emotes[i][0] + "Wheel'>");
-			
-			if(options.legacyemotes) {
-				message = message.replace(new RegExp("(\\s|^)" + emotes[i][0] + "(?=\\s|$|<)", "g"), "$1<img src='" + emotes[i][1] + "' class='polyemote' title=':" + emotes[i][0] + "'>");
-				message = message.replace(new RegExp("(\\s|^)" + emotes[i][0] + "Spin(?=\\s|$|<)", "g"), "$1<img src='" + emotes[i][1] + "' class='polyemote polyemote-spin' title=':" + emotes[i][0] + "Spin'>");
-				message = message.replace(new RegExp("(\\s|^)" + emotes[i][0] + "Wheel(?=\\s|$|<)", "g"), "$1<img src='" + emotes[i][1] + "' class='polyemote polyemote-spin-fast' title=':" + emotes[i][0] + "Wheel'>");
-			}
-		}
-	} else if(site == "twitch") {
-		for(var i = 0; i < emotes.length; i++) { // Replace for each emote in array.
-			message = message.replace(new RegExp("(\\s|^)" + emotes[i][0] + "(?=\\s|$)", "g"), "$1<img src='" + emotes[i][1] + "' class='emoticon tooltip polyemote' original-title='" + emotes[i][0] + "'>");
-			message = message.replace(new RegExp("(\\s|^)" + emotes[i][0] + "Spin(?=\\s|$)", "g"), "$1<img src='" + emotes[i][1] + "' class='emoticon tooltip polyemote polyemote-spin' original-title='" + emotes[i][0] + "Spin'>");
-			message = message.replace(new RegExp("(\\s|^)" + emotes[i][0] + "Wheel(?=\\s|$)", "g"), "$1<img src='" + emotes[i][1] + "' class='emoticon tooltip polyemote polyemote-spin-fast' original-title='" + emotes[i][0] + "Wheel'>");
-		}
-	}
-	
-	return message;
+function addEmotes(message, emotes, site, options) {
+    for (let i = 0; i < emotes.length; i++) {
+        const emote = emotes[i];
+        const emoteCode = emote[0];
+        const emoteUrl = emote[1];
+
+        if (site === "beam" || (site === "twitch" && options.legacyemotes)) {
+            const emoteRegex = new RegExp(`(\\s|^):${emoteCode}(?=\\s|$|<)`, "g");
+            message = message.replace(emoteRegex, `$1<img src='${emoteUrl}' class='polyemote' title=':${emoteCode}'>`);
+        }
+
+        if (site === "twitch") {
+            const emoteRegex = new RegExp(`(\\s|^)${emoteCode}(?=\\s|$)`, "g");
+            message = message.replace(emoteRegex, `$1<img src='${emoteUrl}' class='emoticon tooltip polyemote' original-title='${emoteCode}'>`);
+        }
+    }
+
+    return message;
 }
 
-var applyEmotesEvent = function() {};
-onMessageAdd(function(mut, name, message, id) {
-	applyEmotesEvent(mut, name, message, id);
+var applyEmotesEvent = function () {};
+
+onMessageAdd(function (mut, name, message, id) {
+    applyEmotesEvent(mut, name, message, id);
 });
 
-$.get("//twitchemotes.com/api_cache/v2/global.json", function(twitchemotes) {
-	$.get("//extend.dinu.ga/emotes.json", function(emotes) {
-		applyEmotesEvent = function(mut, name, message, id) {
-			if(options.polyemotes) {
-				var toemotes = [];
-				
-				for(var i = 0; i < emotes.global.length; i++) { // Global emotes...
-					toemotes.push([emotes.global[i], "//extend.dinu.ga/emotes/global/" + emotes.global[i] + ".png"]);
-				}
-				
-				for(var i = 0; i < Object.keys(emotes.user).length; i++) { // User emotes...
-					if(name.toLowerCase() == Object.keys(emotes.user)[i] ||
-					getStreamerName().toLowerCase() == Object.keys(emotes.user)[i]) {
-						for(var j = 0; j < emotes.user[Object.keys(emotes.user)[i]].length; j++) {
-							toemotes.push([emotes.user[Object.keys(emotes.user)[i]][j], "//extend.dinu.ga/emotes/user/" + Object.keys(emotes.user)[i] + "/" + emotes.user[Object.keys(emotes.user)[i]][j] + ".png"]);
-						}
-					}
-				}
-				
-				if(options.twitchemotes) {
-					for(var i = 0; i < Object.keys(twitchemotes.emotes).length; i++) { // Twitch emotes...
-						toemotes.push([Object.keys(twitchemotes.emotes)[i], "//static-cdn.jtvnw.net/emoticons/v1/" + twitchemotes.emotes[Object.keys(twitchemotes.emotes)[i]].image_id + "/1.0"]);
-					}
-				}
-				
-				var tomessage = addEmotes(message, toemotes);
-				if(tomessage != message) {
-					replaceMessage(mut, name, tomessage);
-				}
-			}
-		};
-	});
+$.get("//emotes.adamcy.pl/v1/channel/${channel}/emotes/all", function (twitchemotes) {
+    $.get("//poly.x10.mx/emotes.json", function (emotes) {
+        applyEmotesEvent = function (mut, name, message, id) {
+            if (options.polyemotes) {
+                var toemotes = [];
+
+                for (let i = 0; i < emotes.global.length; i++) {
+                    toemotes.push([emotes.global[i], "//poly.x10.mx/emotes/global/" + emotes.global[i] + ".png"]);
+                }
+
+                for (let i = 0; i < Object.keys(emotes.user).length; i++) {
+                    if (name.toLowerCase() == Object.keys(emotes.user)[i] ||
+                        getStreamerName().toLowerCase() == Object.keys(emotes.user)[i]) {
+                        for (let j = 0; j < emotes.user[Object.keys(emotes.user)[i]].length; j++) {
+                            toemotes.push([emotes.user[Object.keys(emotes.user)[i]][j], "//extend.dinu.ga/emotes/user/" + Object.keys(emotes.user)[i] + "/" + emotes.user[Object.keys(emotes.user)[i]][j] + ".png"]);
+                        }
+                    }
+                }
+
+                if (options.twitchemotes) {
+                    for (let i = 0; i < Object.keys(twitchemotes.emotes).length; i++) {
+                        toemotes.push([Object.keys(twitchemotes.emotes)[i], "//static-cdn.jtvnw.net/emoticons/v1/" + twitchemotes.emotes[Object.keys(twitchemotes.emotes)[i]].image_id + "/1.0"]);
+                    }
+                }
+
+                var tomessage = addEmotes(message, toemotes, site, options);
+                if (tomessage != message) {
+                    replaceMessage(mut, name, tomessage);
+                }
+            }
+        };
+    });
 });
