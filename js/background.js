@@ -1,41 +1,37 @@
-chrome.storage.sync.get("options", function(items) {
-	var tooptions = {
-		polyemotes: true,
-		twitchemotes: true,
-		legacyemotes: false,
-		linkimages: true,
-		realthumbs: false,
-		devatars: true,
-		colornames: false,
-		colornamesover: false,
-		chatalerts: true,
-		teams: true,
-		teamsnamesover: false,
-		beamlink: true,
-		beamlinkcolor: true,
-		beamlinknamesover: false,
-		// showdeleted: false,
-		separator: false,
-		// darkheader: false
-	}
-	
-	if(!items.options) { // Reset options on fresh install.
-		chrome.storage.sync.set({options: tooptions});
-	} else if(Object.keys(items.options).length != Object.keys(tooptions).length) { // Keep options on upgrade.
-		for(var i = 0; i < Object.keys(tooptions).length; i++) {
-			var cur = Object.keys(tooptions)[i];
-			
-			if(Object.keys(items.options).indexOf(cur) > -1) {
-				tooptions[cur] = items.options[cur];
-			}
-		}
-		
-		chrome.storage.sync.set({options: tooptions});
-	}
+// Default options object with your specified settings
+var defaultOptions = {
+  polyemotes: true,
+  twitchemotes: true,
+  legacyemotes: false,
+  linkimages: true,
+  realthumbs: false,
+  devatars: true,
+  colornames: false,
+  colornamesover: false,
+  chatalerts: true,
+  teams: true,
+  teamsnamesover: false,
+  beamlink: true,
+  beamlinkcolor: true,
+  beamlinknamesover: false,
+  // showdeleted: false,
+  separator: false,
+  // darkheader: false
+};
+
+// Check if options are already set in storage, and initialize with defaults if needed
+chrome.storage.sync.get("options", function (items) {
+  if (!items.options || Object.keys(items.options).length !== Object.keys(defaultOptions).length) {
+    chrome.storage.sync.set({ options: defaultOptions }, function () {
+      console.log("Options initialized or updated with defaults");
+    });
+  }
 });
 
-chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) { // Settings icon.
-	if(message == "showicon") {
-		chrome.pageAction.show(sender.tab.id);
-	}
+// Listen for messages from the extension popup
+chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
+  if (message === "showicon") {
+    chrome.pageAction.show(sender.tab.id);
+  }
 });
+
